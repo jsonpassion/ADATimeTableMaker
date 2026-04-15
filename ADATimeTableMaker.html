@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADATimeTableMaker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --surface2: #1f1f1f;
+    --border: #2a2a2a;
+    --text: #e8e8e8;
+    --muted: #666;
+    --am: #0090d4;
+    --pm: #e07b00;
+    --accent: var(--am);
+    --danger: #cc3333;
+    --radius: 6px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans KR', sans-serif;
+    min-height: 100vh;
+    padding: 28px 32px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  /* ── TOP HEADER ── */
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 24px;
+    padding: 14px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
+  .header h1 {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #fff;
+    margin-right: 8px;
+  }
+
+  .divider { width: 1px; height: 24px; background: var(--border); }
+
+  /* AM/PM Toggle */
+  .pm-toggle-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .pm-toggle-wrap input[type=checkbox] { display: none; }
+
+  .toggle-track {
+    width: 52px; height: 26px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    position: relative;
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  .toggle-track::after {
+    content: '';
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 18px; height: 18px;
+    background: var(--am);
+    border-radius: 50%;
+    transition: transform 0.2s, background 0.2s;
+  }
+
+  .pm-toggle-wrap input:checked + .toggle-track { background: #2a1800; border-color: var(--pm); }
+  .pm-toggle-wrap input:checked + .toggle-track::after {
+    transform: translateX(26px);
+    background: var(--pm);
+  }
+
+  .session-badge {
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: 0.06em;
+    background: var(--am);
+    color: #fff;
+    transition: background 0.2s;
+    min-width: 36px;
+    text-align: center;
+  }
+  .session-badge.pm { background: var(--pm); }
+
+  /* Start time */
+  .field-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  input[type=time], input[type=text], input[type=number] {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 4px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    padding: 5px 9px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input:focus { border-color: var(--accent); }
+  input[type=time] { width: 108px; }
+
+  /* Action button group */
+  .btn-group {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-action {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 7px 14px;
+    border-radius: var(--radius);
+    font-family: 'IBM Plex Sans KR', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+  }
+  .btn-action:hover { border-color: var(--accent); color: #fff; background: var(--surface); }
+  .btn-action:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .btn-action.primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: transparent;
+  }
+  .btn-action.primary:hover { opacity: 0.88; }
+  .btn-action.primary.pm { background: var(--pm); }
+
+  .btn-action.success {
+    border-color: #22c55e !important;
+    color: #22c55e !important;
+    background: rgba(34,197,94,0.08) !important;
+  }
+
+  /* Toast */
+  #toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(12px);
+    background: #1a1a1a;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+    z-index: 9999;
+    white-space: nowrap;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── EDITOR ── */
+  .section-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+
+  .editor-wrap {
+    margin-bottom: 28px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .editor-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .editor-table thead tr {
+    background: #111;
+  }
+
+  .editor-table th {
+    padding: 9px 12px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+  }
+
+  .editor-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+  .editor-table tbody tr:last-child { border-bottom: none; }
+  .editor-table tbody tr:hover { background: #1a1a1a; }
+  .editor-table tbody tr.drag-over { border-top: 2px solid var(--accent) !important; }
+  .editor-table tbody tr.dragging { opacity: 0.4; }
+
+  .editor-table td { padding: 5px 8px; vertical-align: middle; }
+
+  .drag-handle {
+    cursor: grab;
+    color: #3a3a3a;
+    font-size: 18px;
+    line-height: 1;
+    padding: 4px 8px;
+    transition: color 0.1s;
+    display: block;
+    text-align: center;
+  }
+  .drag-handle:hover { color: #666; cursor: grab; }
+  .drag-handle:active { cursor: grabbing; }
+
+  .e-input {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text);
+    border-radius: 4px;
+    font-family: 'IBM Plex Sans KR', sans-serif;
+    font-size: 13px;
+    padding: 5px 8px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .e-input:hover { border-color: var(--border); background: var(--surface2); }
+  .e-input:focus { border-color: var(--accent); background: var(--surface2); }
+
+  .e-input.dur {
+    font-family: 'IBM Plex Mono', monospace;
+    text-align: center;
+    width: 72px;
+  }
+
+  .time-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    white-space: nowrap;
+    padding: 4px 8px;
+    background: rgba(0,144,212,0.08);
+    border-radius: 4px;
+    display: inline-block;
+  }
+  .time-badge.pm { color: var(--pm); background: rgba(224,123,0,0.1); }
+  .time-badge.over {
+    color: #ff4444 !important;
+    background: rgba(255,68,68,0.12) !important;
+    border: 1px solid rgba(255,68,68,0.35);
+    animation: pulse-red 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse-red {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.6; }
+  }
+
+  .btn-delete {
+    background: none;
+    border: 1px solid transparent;
+    color: #444;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .btn-delete:hover { border-color: var(--danger); color: var(--danger); }
+
+  .btn-add {
+    width: 100%;
+    background: none;
+    border: none;
+    border-top: 1px dashed var(--border);
+    color: var(--muted);
+    padding: 10px;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: 'IBM Plex Sans KR', sans-serif;
+    transition: color 0.15s;
+    text-align: center;
+  }
+  .btn-add:hover { color: var(--accent); }
+
+  /* ── PREVIEW ── */
+  #tableWrapper {
+    background: #000;
+    border-radius: 4px;
+    overflow: hidden;
+    display: inline-block;
+    width: 100%;
+  }
+
+  #scheduleTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'IBM Plex Sans KR', sans-serif;
+    background: #000;
+    table-layout: fixed;
+  }
+
+  #scheduleTable colgroup col:nth-child(1) { width: 18%; }
+  #scheduleTable colgroup col:nth-child(2) { width: 42%; }
+  #scheduleTable colgroup col:nth-child(3) { width: 20%; }
+  #scheduleTable colgroup col:nth-child(4) { width: 20%; }
+
+  #scheduleTable thead th {
+    background: #0090d4;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 14px 20px;
+    text-align: center;
+    border: 1px solid #0090d4;
+    letter-spacing: 0.02em;
+  }
+
+  #scheduleTable.pm thead th { background: var(--pm); border-color: var(--pm); }
+
+  #scheduleTable tbody td {
+    background: #000;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 11px 20px;
+    text-align: center;
+    border: 1px solid #1e1e1e;
+    letter-spacing: 0.01em;
+  }
+
+  #scheduleTable tbody tr.break-row td {
+    color: #bbb;
+    font-weight: 600;
+  }
+
+  .time-col {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  /* Preview row that exceeds session limit */
+  #scheduleTable tbody tr.over-row td {
+    background: #160000 !important;
+  }
+  #scheduleTable tbody tr.over-row .time-col {
+    color: #ff4444 !important;
+  }
+
+  /* Session status bar */
+  #sessionStatus {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .status-bar-track {
+    flex: 1;
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 3px;
+    overflow: hidden;
+    max-width: 320px;
+  }
+  .status-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s, background 0.3s;
+    background: var(--accent);
+  }
+  .status-bar-fill.over { background: #ff4444; }
+  .status-text { color: var(--muted); white-space: nowrap; }
+  .status-text.warn { color: #ff4444; font-weight: 700; }
+
+  /* row index chips */
+  .row-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px; height: 20px;
+    background: var(--surface2);
+    border-radius: 3px;
+    font-size: 10px;
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+    margin-right: 2px;
+    flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <h1>📋 Schedule Builder</h1>
+  <div class="divider"></div>
+
+  <label class="pm-toggle-wrap" title="오후 세션 전환">
+    <input type="checkbox" id="pmToggle" onchange="onToggleSession()">
+    <div class="toggle-track"></div>
+  </label>
+  <span class="session-badge" id="sessionBadge">AM</span>
+  <span style="font-size:13px; color:var(--muted)">오후 세션</span>
+
+  <div class="divider"></div>
+
+  <span class="field-label">시작 시간</span>
+  <input type="time" id="startTimeInput" value="09:10" oninput="renderAll()">
+
+  <div class="btn-group">
+    <button class="btn-action" id="copyImgBtn" onclick="copyImage()" title="PNG를 클립보드에 복사 → 키노트에 붙여넣기">
+      <span>⎘</span> 이미지 복사
+    </button>
+    <button class="btn-action" id="copyTableBtn" onclick="copyTable()" title="HTML 표를 클립보드에 복사 → 키노트에 수정 가능한 표로 붙여넣기">
+      <span>⊞</span> 표 복사
+    </button>
+    <button class="btn-action primary" id="exportBtn" onclick="exportImage()" title="PNG 파일로 저장">
+      <span>📷</span> 이미지 저장
+    </button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- EDITOR -->
+<div>
+  <div class="section-label">▸ 프로그램 편집 (드래그로 순서 변경)</div>
+  <div class="editor-wrap">
+    <table class="editor-table" id="editorTable">
+      <thead>
+        <tr>
+          <th style="width:36px"></th>
+          <th style="width:36px">#</th>
+          <th>프로그램 타이틀</th>
+          <th style="width:140px">진행자</th>
+          <th style="width:150px">장소</th>
+          <th style="width:80px; text-align:center">시간(분)</th>
+          <th style="width:130px">타임 윈도우</th>
+          <th style="width:44px"></th>
+        </tr>
+      </thead>
+      <tbody id="editorBody"></tbody>
+    </table>
+    <button class="btn-add" onclick="addRow()">+ 프로그램 추가</button>
+  </div>
+</div>
+
+<!-- PREVIEW -->
+<div>
+  <div class="section-label">▸ 미리보기 (내보내기 대상)</div>
+  <div id="sessionStatus">
+    <span class="status-text" id="statusText">—</span>
+    <div class="status-bar-track"><div class="status-bar-fill" id="statusFill"></div></div>
+    <span class="status-text" id="statusLimit">—</span>
+  </div>
+  <div id="tableWrapper">
+    <table id="scheduleTable">
+      <colgroup>
+        <col><col><col><col>
+      </colgroup>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Program</th>
+          <th>진행자</th>
+          <th>장소</th>
+        </tr>
+      </thead>
+      <tbody id="scheduleBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// ─── DEFAULT DATA ───────────────────────────────────────────────
+const DEFAULT = [
+  { title: 'Bridge Overview',   facilitator: 'Jason',   location: 'Nuri',       duration: 15 },
+  { title: 'Reflection GA',     facilitator: 'Nathan',  location: 'Nuri',       duration: 15 },
+  { title: 'Break',             facilitator: '',        location: '',           duration: 20 },
+  { title: 'Reflection',        facilitator: 'Jaesung', location: '5층 누리랩', duration: 50 },
+  { title: 'Break',             facilitator: '',        location: '',           duration: 10 },
+  { title: 'Skill Gap Mapping', facilitator: 'Isaac',   location: '5층 누리랩', duration: 40 },
+  { title: 'Break',             facilitator: '',        location: '',           duration: 10 },
+  { title: 'Active Listening',  facilitator: 'MK',      location: '5층 누리랩', duration: 50 },
+  { title: 'Wrap-up',           facilitator: 'Gommin',  location: '5층 누리랩', duration: 10 },
+];
+
+let state = {
+  am: JSON.parse(JSON.stringify(DEFAULT)),
+  pm: JSON.parse(JSON.stringify(DEFAULT)),
+  isPM: false,
+};
+
+let dragSrcIdx = null;
+
+// ─── HELPERS ────────────────────────────────────────────────────
+function cur()    { return state.isPM ? state.pm : state.am; }
+function setCur(p){ if (state.isPM) state.pm = p; else state.am = p; }
+
+function parseTime(s) {
+  const [h, m] = s.split(':').map(Number);
+  return h * 60 + m;
+}
+function fmtTime(min) {
+  const h = Math.floor(min / 60), m = min % 60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+function timeSeries(progs, base) {
+  let t = base;
+  return progs.map(p => {
+    const s = t;
+    t += (parseInt(p.duration) || 0);
+    return { ...p, startMin: s, endMin: t };
+  });
+}
+function isBreak(p) { return p.title.trim().toLowerCase() === 'break' || (!p.facilitator && !p.location); }
+function esc(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+// Session hard end: AM → 13:00 (780 min), PM → 18:00 (1080 min)
+function sessionEnd() { return state.isPM ? 18*60 : 13*60; }
+
+// ─── TOGGLE ─────────────────────────────────────────────────────
+function onToggleSession() {
+  state.isPM = document.getElementById('pmToggle').checked;
+  const badge   = document.getElementById('sessionBadge');
+  const start   = document.getElementById('startTimeInput');
+  const table   = document.getElementById('scheduleTable');
+
+  if (state.isPM) {
+    badge.textContent = 'PM'; badge.className = 'session-badge pm';
+    start.value = '14:10';
+    document.getElementById('exportBtn').classList.add('pm');
+    table.className = 'pm';
+    document.documentElement.style.setProperty('--accent', 'var(--pm)');
+  } else {
+    badge.textContent = 'AM'; badge.className = 'session-badge';
+    start.value = '09:10';
+    document.getElementById('exportBtn').classList.remove('pm');
+    table.className = '';
+    document.documentElement.style.setProperty('--accent', 'var(--am)');
+  }
+  renderAll();
+}
+
+// ─── RENDER EDITOR ──────────────────────────────────────────────
+function renderEditor() {
+  const progs = cur();
+  const base  = parseTime(document.getElementById('startTimeInput').value || '09:00');
+  const timed = timeSeries(progs, base);
+  const isPM  = state.isPM;
+  const tbody = document.getElementById('editorBody');
+  tbody.innerHTML = '';
+
+  timed.forEach((p, i) => {
+    const tr = document.createElement('tr');
+    tr.dataset.idx = i;
+    tr.draggable = true;
+
+    tr.addEventListener('dragstart', e => {
+      dragSrcIdx = i;
+      tr.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    tr.addEventListener('dragend', () => {
+      tr.classList.remove('dragging');
+      document.querySelectorAll('#editorBody tr').forEach(r => r.classList.remove('drag-over'));
+    });
+    tr.addEventListener('dragover', e => {
+      e.preventDefault();
+      document.querySelectorAll('#editorBody tr').forEach(r => r.classList.remove('drag-over'));
+      tr.classList.add('drag-over');
+    });
+    tr.addEventListener('dragleave', () => tr.classList.remove('drag-over'));
+    tr.addEventListener('drop', e => {
+      e.preventDefault();
+      tr.classList.remove('drag-over');
+      if (dragSrcIdx !== null && dragSrcIdx !== i) {
+        const arr = cur();
+        const [moved] = arr.splice(dragSrcIdx, 1);
+        arr.splice(i, 0, moved);
+        setCur(arr);
+        dragSrcIdx = null;
+        renderAll();
+      }
+    });
+
+    const tw    = `${fmtTime(p.startMin)} – ${fmtTime(p.endMin)}`;
+    const limit = sessionEnd();
+    const over  = p.endMin > limit;
+    const badgeCls = over ? 'time-badge over' : `time-badge${isPM?' pm':''}`;
+    tr.innerHTML = `
+      <td><span class="drag-handle" title="드래그로 이동">⠿</span></td>
+      <td><span class="row-num">${i+1}</span></td>
+      <td><input class="e-input" value="${esc(p.title)}"
+           oninput="updateProg(${i},'title',this.value)" placeholder="프로그램 이름"></td>
+      <td><input class="e-input" value="${esc(p.facilitator)}"
+           oninput="updateProg(${i},'facilitator',this.value)" placeholder="—"></td>
+      <td><input class="e-input" value="${esc(p.location)}"
+           oninput="updateProg(${i},'location',this.value)" placeholder="—"></td>
+      <td><input class="e-input dur" type="number" min="1" value="${p.duration}"
+           oninput="updateProg(${i},'duration',this.value)"></td>
+      <td><span class="${badgeCls}">${tw}${over?' ⚠️':''}</span></td>
+      <td><button class="btn-delete" onclick="deleteRow(${i})" title="삭제">✕</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ─── RENDER PREVIEW ─────────────────────────────────────────────
+function renderPreview() {
+  const progs  = cur();
+  const base   = parseTime(document.getElementById('startTimeInput').value || '09:00');
+  const timed  = timeSeries(progs, base);
+  const limit  = sessionEnd();
+  const tbody  = document.getElementById('scheduleBody');
+  tbody.innerHTML = '';
+
+  timed.forEach(p => {
+    const tr   = document.createElement('tr');
+    const over = p.endMin > limit;
+    const classes = [isBreak(p) ? 'break-row' : '', over ? 'over-row' : ''].filter(Boolean).join(' ');
+    if (classes) tr.className = classes;
+    tr.innerHTML = `
+      <td class="time-col">${fmtTime(p.startMin)} - ${fmtTime(p.endMin)}</td>
+      <td>${esc(p.title)}</td>
+      <td>${esc(p.facilitator)}</td>
+      <td>${esc(p.location)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  updateSessionStatus(timed, base, limit);
+}
+
+function updateSessionStatus(timed, base, limit) {
+  if (!timed.length) return;
+  const totalUsed = timed[timed.length - 1].endMin - base;
+  const totalAvail = limit - base;
+  const pct  = Math.min((totalUsed / totalAvail) * 100, 100);
+  const over = timed[timed.length - 1].endMin > limit;
+  const diff = Math.abs(timed[timed.length - 1].endMin - limit);
+
+  const fillEl  = document.getElementById('statusFill');
+  const textEl  = document.getElementById('statusText');
+  const limitEl = document.getElementById('statusLimit');
+
+  fillEl.style.width = pct + '%';
+  fillEl.className = 'status-bar-fill' + (over ? ' over' : '');
+
+  const usedH = Math.floor(totalUsed/60), usedM = totalUsed%60;
+  const avH   = Math.floor(totalAvail/60), avM   = totalAvail%60;
+  const usedStr  = usedH ? `${usedH}h ${usedM}m` : `${usedM}m`;
+  const availStr = avH   ? `${avH}h ${avM ? avM+'m' : ''}` : `${avM}m`;
+
+  if (over) {
+    textEl.textContent = `⚠️ ${usedStr} / ${availStr} — ${diff}분 초과`;
+    textEl.className = 'status-text warn';
+  } else {
+    const remH = Math.floor(diff/60), remM = diff%60;
+    const remStr = remH ? `${remH}h ${remM ? remM+'m ' : ''}` : `${remM}m`;
+    textEl.textContent = `✓ ${usedStr} / ${availStr} — ${remStr}여유`;
+    textEl.className = 'status-text';
+  }
+  limitEl.textContent = fmtTime(limit);
+  limitEl.className = 'status-text' + (over ? ' warn' : '');
+}
+
+function renderAll() { renderEditor(); renderPreview(); }
+
+// ─── MUTATIONS ──────────────────────────────────────────────────
+function updateProg(i, field, val) {
+  const arr = cur();
+  arr[i][field] = (field === 'duration') ? (parseInt(val)||1) : val;
+  setCur(arr);
+  renderPreview();
+  refreshTimeBadges();
+}
+
+function refreshTimeBadges() {
+  const progs = cur();
+  const base  = parseTime(document.getElementById('startTimeInput').value || '09:00');
+  const timed = timeSeries(progs, base);
+  const isPM  = state.isPM;
+  const limit = sessionEnd();
+  document.querySelectorAll('#editorBody tr').forEach((tr, i) => {
+    const span = tr.querySelector('.time-badge');
+    if (span && timed[i]) {
+      const over = timed[i].endMin > limit;
+      span.textContent = `${fmtTime(timed[i].startMin)} – ${fmtTime(timed[i].endMin)}${over?' ⚠️':''}`;
+      span.className = over ? 'time-badge over' : ('time-badge' + (isPM ? ' pm' : ''));
+    }
+  });
+}
+
+function addRow() {
+  const arr = cur();
+  arr.push({ title: '새 프로그램', facilitator: '', location: '', duration: 30 });
+  setCur(arr);
+  renderAll();
+}
+
+function deleteRow(i) {
+  const arr = cur();
+  if (arr.length <= 1) return;
+  arr.splice(i, 1);
+  setCur(arr);
+  renderAll();
+}
+
+// ─── RENDER CANVAS HELPER ───────────────────────────────────────
+async function renderCanvas() {
+  const wrapper = document.getElementById('tableWrapper');
+  return html2canvas(wrapper, {
+    backgroundColor: '#000000',
+    scale: 3,
+    useCORS: true,
+    logging: false,
+  });
+}
+
+// ─── EXPORT (save file) ─────────────────────────────────────────
+async function exportImage() {
+  const btn = document.getElementById('exportBtn');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '⏳ ...'; btn.disabled = true;
+  try {
+    const canvas = await renderCanvas();
+    const link = document.createElement('a');
+    const tag = state.isPM ? 'PM' : 'AM';
+    const st  = document.getElementById('startTimeInput').value.replace(':','');
+    link.download = `schedule_${tag}_${st}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    showToast('📷 이미지가 저장되었습니다');
+  } finally { btn.innerHTML = orig; btn.disabled = false; }
+}
+
+// ─── COPY IMAGE TO CLIPBOARD ────────────────────────────────────
+async function copyImage() {
+  const btn = document.getElementById('copyImgBtn');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '⏳ ...'; btn.disabled = true;
+  try {
+    const canvas = await renderCanvas();
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+    btn.classList.add('success');
+    showToast('⎘ 이미지가 클립보드에 복사됐습니다 — 키노트에 ⌘V로 붙여넣기');
+    setTimeout(() => btn.classList.remove('success'), 1800);
+  } catch(e) {
+    showToast('⚠️ 클립보드 접근 권한이 필요합니다 (브라우저 설정 확인)');
+    console.warn(e);
+  } finally { btn.innerHTML = orig; btn.disabled = false; }
+}
+
+// ─── COPY TABLE (editable) TO CLIPBOARD ─────────────────────────
+async function copyTable() {
+  const btn = document.getElementById('copyTableBtn');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '⏳ ...'; btn.disabled = true;
+
+  try {
+    const progs  = cur();
+    const base   = parseTime(document.getElementById('startTimeInput').value || '09:00');
+    const timed  = timeSeries(progs, base);
+    const isPM   = state.isPM;
+    const hdrBg  = isPM ? '#e07b00' : '#0090d4';
+
+    const rows = timed.map(p => {
+      const tw  = `${fmtTime(p.startMin)} - ${fmtTime(p.endMin)}`;
+      const dim = isBreak(p) ? 'color:#bbbbbb;' : 'color:#ffffff;';
+      const cell = (txt, extra='') =>
+        `<td style="background:#000000;${dim}font-family:Arial,sans-serif;font-size:15px;font-weight:700;
+         padding:11px 20px;text-align:center;border:1px solid #1e1e1e;${extra}">${esc(txt)}</td>`;
+      return `<tr>
+        ${cell(tw, 'font-family:\'Courier New\',monospace;font-size:13px;white-space:nowrap;')}
+        ${cell(p.title)}
+        ${cell(p.facilitator)}
+        ${cell(p.location)}
+      </tr>`;
+    }).join('');
+
+    const hdrCell = (txt) =>
+      `<th style="background:${hdrBg};color:#ffffff;font-family:Arial,sans-serif;font-size:16px;
+       font-weight:700;padding:14px 20px;text-align:center;border:1px solid ${hdrBg};">${txt}</th>`;
+
+    const html = `
+      <meta charset="utf-8">
+      <table style="border-collapse:collapse;width:100%;background:#000000;">
+        <thead><tr>${hdrCell('Time')}${hdrCell('Program')}${hdrCell('진행자')}${hdrCell('장소')}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+
+    const blob = new Blob([html], { type: 'text/html' });
+    await navigator.clipboard.write([new ClipboardItem({ 'text/html': blob })]);
+    btn.classList.add('success');
+    showToast('⊞ 표가 클립보드에 복사됐습니다 — 키노트에 ⌘V로 붙여넣기 (수정 가능)');
+    setTimeout(() => btn.classList.remove('success'), 1800);
+  } catch(e) {
+    showToast('⚠️ 클립보드 접근 권한이 필요합니다 (브라우저 설정 확인)');
+    console.warn(e);
+  } finally { btn.innerHTML = orig; btn.disabled = false; }
+}
+
+// ─── TOAST ──────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ─── INIT ────────────────────────────────────────────────────────
+renderAll();
+</script>
+</body>
+</html>
