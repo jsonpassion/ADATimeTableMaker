@@ -436,15 +436,15 @@
 
 <!-- HEADER -->
 <div class="header">
-  <h1>📋 Schedule Builder</h1>
+  <h1>📋 ADA TimeTable Maker</h1>
   <div class="divider"></div>
 
-  <label class="pm-toggle-wrap" title="오후 세션 전환">
+  <label class="pm-toggle-wrap" title="AM/PM 세션 전환 — 프로그램은 공유됩니다">
     <input type="checkbox" id="pmToggle" onchange="onToggleSession()">
     <div class="toggle-track"></div>
   </label>
   <span class="session-badge" id="sessionBadge">AM</span>
-  <span style="font-size:13px; color:var(--muted)">오후 세션</span>
+  <span style="font-size:12px; color:var(--muted)">세션 전환 (프로그램 공유)</span>
 
   <div class="divider"></div>
 
@@ -529,17 +529,18 @@ const DEFAULT = [
   { title: 'Wrap-up',           facilitator: 'Gommin',  location: '5층 누리랩', duration: 10 },
 ];
 
+// AM/PM 세션은 같은 4시간 윈도우에 같은 프로그램 패턴을 사용하므로
+// 단일 배열을 공유한다. 토글은 시간대(시작 시각/색상/세션 종료)만 전환한다.
 let state = {
-  am: JSON.parse(JSON.stringify(DEFAULT)),
-  pm: JSON.parse(JSON.stringify(DEFAULT)),
+  programs: JSON.parse(JSON.stringify(DEFAULT)),
   isPM: false,
 };
 
 let dragSrcIdx = null;
 
 // ─── HELPERS ────────────────────────────────────────────────────
-function cur()    { return state.isPM ? state.pm : state.am; }
-function setCur(p){ if (state.isPM) state.pm = p; else state.am = p; }
+function cur()    { return state.programs; }
+function setCur(p){ state.programs = p; }
 
 function parseTime(s) {
   const [h, m] = s.split(':').map(Number);
