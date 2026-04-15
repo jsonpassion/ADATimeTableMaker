@@ -828,16 +828,19 @@ async function copyTable() {
     const isPM   = state.isPM;
     const hdrBg  = isPM ? '#e07b00' : '#0090d4';
 
+    const FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif";
+    const BASE_CELL = `font-family:${FONT};font-size:32pt;font-weight:bold;` +
+                      `padding:16px 24px;text-align:center;border:1px solid #1e1e1e;`;
+
     const rows = timed.map(p => {
       const tw  = `${fmtTime(p.startMin)} - ${fmtTime(p.endMin)}`;
-      const breakStyle = isBreak(p)
-        ? 'background:#141414;color:#888888;font-weight:500;font-style:italic;'
-        : 'background:#000000;color:#ffffff;font-weight:700;';
+      const breakBg = isBreak(p)
+        ? 'background:#8a8a8a;color:#ffffff;'
+        : 'background:#000000;color:#ffffff;';
       const cell = (txt, extra='') =>
-        `<td style="${breakStyle}font-family:Arial,sans-serif;font-size:15px;
-         padding:11px 20px;text-align:center;border:1px solid #1e1e1e;${extra}">${esc(txt)}</td>`;
+        `<td style="${breakBg}${BASE_CELL}${extra}">${esc(txt)}</td>`;
       return `<tr>
-        ${cell(tw, 'font-family:\'Courier New\',monospace;font-size:13px;white-space:nowrap;')}
+        ${cell(tw, 'white-space:nowrap;')}
         ${cell(p.title)}
         ${cell(p.facilitator)}
         ${cell(p.location)}
@@ -845,8 +848,8 @@ async function copyTable() {
     }).join('');
 
     const hdrCell = (txt) =>
-      `<th style="background:${hdrBg};color:#ffffff;font-family:Arial,sans-serif;font-size:16px;
-       font-weight:700;padding:14px 20px;text-align:center;border:1px solid ${hdrBg};">${txt}</th>`;
+      `<th style="background:${hdrBg};color:#ffffff;font-family:${FONT};font-size:32pt;` +
+      `font-weight:bold;padding:16px 24px;text-align:center;border:1px solid ${hdrBg};">${txt}</th>`;
 
     const html = `
       <meta charset="utf-8">
