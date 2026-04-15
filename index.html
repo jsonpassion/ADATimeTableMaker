@@ -573,9 +573,9 @@ function isBreak(p) { return p.title.trim().toLowerCase() === 'break' || (!p.fac
 function esc(s) {
   return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-// Session windows: AM 09:10–13:00, PM 14:10–18:00 (start editable)
+// Session windows: AM 09:10–12:50, PM 14:10–17:50 (start editable)
 function defaultStart() { return state.isPM ? '14:10' : '09:10'; }
-function sessionEnd()   { return state.isPM ? 18*60 : 13*60; }
+function sessionEnd()   { return state.isPM ? 17*60+50 : 12*60+50; }
 function getStart() {
   const v = (document.getElementById('startTimeInput').value || '').trim();
   return /^\d{1,2}:\d{2}$/.test(v) ? v : defaultStart();
