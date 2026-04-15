@@ -363,7 +363,7 @@
     letter-spacing: 0.02em;
   }
 
-  #scheduleTable.pm thead th { background: var(--pm); border-color: var(--pm); }
+  /* Preview header stays blue regardless of AM/PM */
 
   #scheduleTable tbody td {
     background: #000;
@@ -826,7 +826,7 @@ async function copyTable() {
     const base   = parseTime(getStart());
     const timed  = timeSeries(progs, base);
     const isPM   = state.isPM;
-    const hdrBg  = isPM ? '#e07b00' : '#0090d4';
+    const hdrBg  = '#0090d4';
 
     const FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif";
     const BASE_CELL = `font-family:${FONT};font-size:32pt;font-weight:bold;` +
