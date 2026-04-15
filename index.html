@@ -370,9 +370,15 @@
   }
 
   #scheduleTable tbody tr.break-row td {
-    color: #bbb;
-    font-weight: 600;
+    background: #141414;
+    color: #888;
+    font-weight: 500;
+    font-style: italic;
   }
+
+  .editor-table tbody tr.break-row { background: #131313; }
+  .editor-table tbody tr.break-row:hover { background: #1a1a1a; }
+  .editor-table tbody tr.break-row .e-input { color: #888; font-style: italic; }
 
   .time-col {
     font-family: 'IBM Plex Mono', monospace;
@@ -449,7 +455,7 @@
   <div class="divider"></div>
 
   <span class="field-label">시작 시간</span>
-  <input type="time" id="startTimeInput" value="09:10" oninput="renderAll()">
+  <input type="time" id="startTimeInput" value="09:10" readonly title="AM 09:10 / PM 14:10 고정">
 
   <div class="btn-group">
     <button class="btn-action" id="copyImgBtn" onclick="copyImage()" title="PNG를 클립보드에 복사 → 키노트에 붙여넣기">
@@ -518,15 +524,11 @@
 <script>
 // ─── DEFAULT DATA ───────────────────────────────────────────────
 const DEFAULT = [
-  { title: 'Bridge Overview',   facilitator: 'Jason',   location: 'Nuri',       duration: 15 },
-  { title: 'Reflection GA',     facilitator: 'Nathan',  location: 'Nuri',       duration: 15 },
-  { title: 'Break',             facilitator: '',        location: '',           duration: 20 },
-  { title: 'Reflection',        facilitator: 'Jaesung', location: '5층 누리랩', duration: 50 },
-  { title: 'Break',             facilitator: '',        location: '',           duration: 10 },
-  { title: 'Skill Gap Mapping', facilitator: 'Isaac',   location: '5층 누리랩', duration: 40 },
-  { title: 'Break',             facilitator: '',        location: '',           duration: 10 },
-  { title: 'Active Listening',  facilitator: 'MK',      location: '5층 누리랩', duration: 50 },
-  { title: 'Wrap-up',           facilitator: 'Gommin',  location: '5층 누리랩', duration: 10 },
+  { title: 'Opening',  facilitator: '', location: '', duration: 15 },
+  { title: 'ABC GA',   facilitator: '', location: '', duration: 60 },
+  { title: 'Break',    facilitator: '', location: '', duration: 15 },
+  { title: 'XYZ GA',   facilitator: '', location: '', duration: 60 },
+  { title: 'Wrap-up',  facilitator: '', location: '', duration: 10 },
 ];
 
 // AM/PM 세션은 같은 4시간 윈도우에 같은 프로그램 패턴을 사용하므로
@@ -601,6 +603,7 @@ function renderEditor() {
     const tr = document.createElement('tr');
     tr.dataset.idx = i;
     tr.draggable = true;
+    if (isBreak(p)) tr.classList.add('break-row');
 
     tr.addEventListener('dragstart', e => {
       dragSrcIdx = i;
@@ -735,6 +738,7 @@ function refreshTimeBadges() {
       span.textContent = `${fmtTime(timed[i].startMin)} – ${fmtTime(timed[i].endMin)}${over?' ⚠️':''}`;
       span.className = over ? 'time-badge over' : ('time-badge' + (isPM ? ' pm' : ''));
     }
+    if (progs[i]) tr.classList.toggle('break-row', isBreak(progs[i]));
   });
 }
 
@@ -814,9 +818,11 @@ async function copyTable() {
 
     const rows = timed.map(p => {
       const tw  = `${fmtTime(p.startMin)} - ${fmtTime(p.endMin)}`;
-      const dim = isBreak(p) ? 'color:#bbbbbb;' : 'color:#ffffff;';
+      const breakStyle = isBreak(p)
+        ? 'background:#141414;color:#888888;font-weight:500;font-style:italic;'
+        : 'background:#000000;color:#ffffff;font-weight:700;';
       const cell = (txt, extra='') =>
-        `<td style="background:#000000;${dim}font-family:Arial,sans-serif;font-size:15px;font-weight:700;
+        `<td style="${breakStyle}font-family:Arial,sans-serif;font-size:15px;
          padding:11px 20px;text-align:center;border:1px solid #1e1e1e;${extra}">${esc(txt)}</td>`;
       return `<tr>
         ${cell(tw, 'font-family:\'Courier New\',monospace;font-size:13px;white-space:nowrap;')}
