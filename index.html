@@ -836,9 +836,8 @@ async function copyTable() {
 
     const rows = timed.map(p => {
       const tw  = `${fmtTime(p.startMin)} - ${fmtTime(p.endMin)}`;
-      const color = isBreak(p) ? 'color:#999999;' : 'color:#ffffff;';
       const cell = (txt, extra='') =>
-        `<td style="${BASE_CELL}${color}${extra}">${esc(txt)}</td>`;
+        `<td style="${BASE_CELL}color:#ffffff;${extra}">${esc(txt)}</td>`;
       return `<tr>
         ${cell(tw, 'white-space:nowrap;')}
         ${cell(p.title)}
