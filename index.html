@@ -645,7 +645,7 @@ function renderEditor() {
       }
     });
 
-    const tw    = `${fmtTime(p.startMin)} – ${fmtTime(p.endMin)}`;
+    const tw    = `${fmtTime(p.startMin)} – ${fmtTime(p.endMin)} (${p.duration}m)`;
     const limit = sessionEnd();
     const over  = p.endMin > limit;
     const badgeCls = over ? 'time-badge over' : `time-badge${isPM?' pm':''}`;
@@ -682,7 +682,7 @@ function renderPreview() {
     const classes = [isBreak(p) ? 'break-row' : '', over ? 'over-row' : ''].filter(Boolean).join(' ');
     if (classes) tr.className = classes;
     tr.innerHTML = `
-      <td class="time-col">${fmtTime(p.startMin)} - ${fmtTime(p.endMin)}</td>
+      <td class="time-col">${fmtTime(p.startMin)} - ${fmtTime(p.endMin)} (${p.duration}m)</td>
       <td>${esc(p.title)}</td>
       <td>${esc(p.facilitator)}</td>
       <td>${esc(p.location)}</td>
@@ -747,7 +747,7 @@ function refreshTimeBadges() {
     const span = tr.querySelector('.time-badge');
     if (span && timed[i]) {
       const over = timed[i].endMin > limit;
-      span.textContent = `${fmtTime(timed[i].startMin)} – ${fmtTime(timed[i].endMin)}${over?' ⚠️':''}`;
+      span.textContent = `${fmtTime(timed[i].startMin)} – ${fmtTime(timed[i].endMin)} (${progs[i].duration}m)${over?' ⚠️':''}`;
       span.className = over ? 'time-badge over' : ('time-badge' + (isPM ? ' pm' : ''));
     }
     if (progs[i]) tr.classList.toggle('break-row', isBreak(progs[i]));
@@ -835,7 +835,7 @@ async function copyTable() {
                       `background:transparent;`;
 
     const rows = timed.map(p => {
-      const tw  = `${fmtTime(p.startMin)} - ${fmtTime(p.endMin)}`;
+      const tw  = `${fmtTime(p.startMin)} - ${fmtTime(p.endMin)} (${p.duration}m)`;
       const cell = (txt, extra='') =>
         `<td style="${BASE_CELL}color:#ffffff;${extra}">${esc(txt)}</td>`;
       return `<tr>
