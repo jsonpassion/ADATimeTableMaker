@@ -828,17 +828,17 @@ async function copyTable() {
     const isPM   = state.isPM;
     const hdrBg  = '#0090d4';
 
+    // Keynote scales pt-in-HTML by ~1.333×, so 24pt here renders as 32pt in Keynote.
     const FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif";
-    const BASE_CELL = `font-family:${FONT};font-size:32pt;font-weight:bold;` +
-                      `padding:16px 24px;text-align:center;border:1px solid #1e1e1e;`;
+    const BASE_CELL = `font-family:${FONT};font-size:24pt;font-weight:bold;` +
+                      `padding:16px 24px;text-align:center;border:1px solid #1e1e1e;` +
+                      `background:transparent;`;
 
     const rows = timed.map(p => {
       const tw  = `${fmtTime(p.startMin)} - ${fmtTime(p.endMin)}`;
-      const breakBg = isBreak(p)
-        ? 'background:#8a8a8a;color:#ffffff;'
-        : 'background:#000000;color:#ffffff;';
+      const color = isBreak(p) ? 'color:#999999;' : 'color:#ffffff;';
       const cell = (txt, extra='') =>
-        `<td style="${breakBg}${BASE_CELL}${extra}">${esc(txt)}</td>`;
+        `<td style="${BASE_CELL}${color}${extra}">${esc(txt)}</td>`;
       return `<tr>
         ${cell(tw, 'white-space:nowrap;')}
         ${cell(p.title)}
@@ -848,12 +848,12 @@ async function copyTable() {
     }).join('');
 
     const hdrCell = (txt) =>
-      `<th style="background:${hdrBg};color:#ffffff;font-family:${FONT};font-size:32pt;` +
+      `<th style="background:${hdrBg};color:#ffffff;font-family:${FONT};font-size:24pt;` +
       `font-weight:bold;padding:16px 24px;text-align:center;border:1px solid ${hdrBg};">${txt}</th>`;
 
     const html = `
       <meta charset="utf-8">
-      <table style="border-collapse:collapse;width:100%;background:#000000;">
+      <table style="border-collapse:collapse;width:100%;background:transparent;">
         <thead><tr>${hdrCell('Time')}${hdrCell('Program')}${hdrCell('진행자')}${hdrCell('장소')}</tr></thead>
         <tbody>${rows}</tbody>
       </table>`;
