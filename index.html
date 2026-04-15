@@ -452,11 +452,6 @@
   <span class="session-badge" id="sessionBadge">AM</span>
   <span style="font-size:12px; color:var(--muted)">세션 전환 (프로그램 공유)</span>
 
-  <div class="divider"></div>
-
-  <span class="field-label">시작 시간</span>
-  <input type="time" id="startTimeInput" value="09:10" readonly title="AM 09:10 / PM 14:10 고정">
-
   <div class="btn-group">
     <button class="btn-action" id="copyImgBtn" onclick="copyImage()" title="PNG를 클립보드에 복사 → 키노트에 붙여넣기">
       <span>⎘</span> 이미지 복사
@@ -564,25 +559,23 @@ function isBreak(p) { return p.title.trim().toLowerCase() === 'break' || (!p.fac
 function esc(s) {
   return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-// Session hard end: AM → 13:00 (780 min), PM → 18:00 (1080 min)
-function sessionEnd() { return state.isPM ? 18*60 : 13*60; }
+// Fixed session windows: AM 09:10–13:00, PM 14:10–18:00
+function sessionStart() { return state.isPM ? '14:10' : '09:10'; }
+function sessionEnd()   { return state.isPM ? 18*60 : 13*60; }
 
 // ─── TOGGLE ─────────────────────────────────────────────────────
 function onToggleSession() {
   state.isPM = document.getElementById('pmToggle').checked;
-  const badge   = document.getElementById('sessionBadge');
-  const start   = document.getElementById('startTimeInput');
-  const table   = document.getElementById('scheduleTable');
+  const badge = document.getElementById('sessionBadge');
+  const table = document.getElementById('scheduleTable');
 
   if (state.isPM) {
     badge.textContent = 'PM'; badge.className = 'session-badge pm';
-    start.value = '14:10';
     document.getElementById('exportBtn').classList.add('pm');
     table.className = 'pm';
     document.documentElement.style.setProperty('--accent', 'var(--pm)');
   } else {
     badge.textContent = 'AM'; badge.className = 'session-badge';
-    start.value = '09:10';
     document.getElementById('exportBtn').classList.remove('pm');
     table.className = '';
     document.documentElement.style.setProperty('--accent', 'var(--am)');
@@ -593,7 +586,7 @@ function onToggleSession() {
 // ─── RENDER EDITOR ──────────────────────────────────────────────
 function renderEditor() {
   const progs = cur();
-  const base  = parseTime(document.getElementById('startTimeInput').value || '09:00');
+  const base  = parseTime(sessionStart());
   const timed = timeSeries(progs, base);
   const isPM  = state.isPM;
   const tbody = document.getElementById('editorBody');
@@ -658,7 +651,7 @@ function renderEditor() {
 // ─── RENDER PREVIEW ─────────────────────────────────────────────
 function renderPreview() {
   const progs  = cur();
-  const base   = parseTime(document.getElementById('startTimeInput').value || '09:00');
+  const base   = parseTime(sessionStart());
   const timed  = timeSeries(progs, base);
   const limit  = sessionEnd();
   const tbody  = document.getElementById('scheduleBody');
@@ -727,7 +720,7 @@ function updateProg(i, field, val) {
 
 function refreshTimeBadges() {
   const progs = cur();
-  const base  = parseTime(document.getElementById('startTimeInput').value || '09:00');
+  const base  = parseTime(sessionStart());
   const timed = timeSeries(progs, base);
   const isPM  = state.isPM;
   const limit = sessionEnd();
@@ -777,7 +770,7 @@ async function exportImage() {
     const canvas = await renderCanvas();
     const link = document.createElement('a');
     const tag = state.isPM ? 'PM' : 'AM';
-    const st  = document.getElementById('startTimeInput').value.replace(':','');
+    const st  = sessionStart().replace(':','');
     link.download = `schedule_${tag}_${st}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
@@ -811,7 +804,7 @@ async function copyTable() {
 
   try {
     const progs  = cur();
-    const base   = parseTime(document.getElementById('startTimeInput').value || '09:00');
+    const base   = parseTime(sessionStart());
     const timed  = timeSeries(progs, base);
     const isPM   = state.isPM;
     const hdrBg  = isPM ? '#e07b00' : '#0090d4';
