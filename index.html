@@ -852,22 +852,23 @@ async function copyTable() {
 
     // 작동 검증된 패턴(4dfdce6) 복원: background: shorthand 통일, height 미사용
     const FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif";
-    const CELL_COMMON = `font-family:${FONT};font-size:24pt;font-weight:bold;` +
-                        `padding:16px 24px;text-align:center;border:1px solid #1e1e1e;color:#ffffff;`;
+    // 속성 순서: background:transparent → color:#ffffff (검증된 순서)
+    const BASE_CELL = `font-family:${FONT};font-size:24pt;font-weight:bold;` +
+                      `padding:16px 24px;text-align:center;border:1px solid #1e1e1e;` +
+                      `background:transparent;`;
 
     const rows = timed.map(p => {
       const twSingle = `${fmtTime(p.startMin)} - ${fmtTime(p.endMin)} (${p.duration}m)`;
-      let twHtml = esc(twSingle);
+      let twContent = esc(twSingle);
       if (state.mode === 'both') {
         const offset = pmBase - base;
         const twPm = `${fmtTime(p.startMin + offset)} - ${fmtTime(p.endMin + offset)} (${p.duration}m)`;
-        twHtml = esc(twSingle) + '<br>' + esc(twPm);
+        twContent = esc(twSingle) + '<br>' + esc(twPm);
       }
-      const bg = 'background:transparent;';
-      const cell = (content, extra='') =>
-        `<td style="${CELL_COMMON}${bg}${extra}">${content}</td>`;
+      const cell = (txt, extra='') =>
+        `<td style="${BASE_CELL}color:#ffffff;${extra}">${txt}</td>`;
       return `<tr>
-        ${cell(twHtml, 'white-space:nowrap;')}
+        ${cell(twContent, 'white-space:nowrap;')}
         ${cell(esc(p.title))}
         ${cell(esc(p.facilitator))}
         ${cell(esc(p.location))}
