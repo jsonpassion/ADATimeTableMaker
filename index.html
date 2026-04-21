@@ -864,7 +864,7 @@ async function copyTable() {
         const twPm = `${fmtTime(p.startMin + offset)} - ${fmtTime(p.endMin + offset)} (${p.duration}m)`;
         twContent = esc(twSingle) + '<br>' + esc(twPm);
       }
-      const bg = isBreak(p) ? 'background:#c0c0c0;' : 'background:transparent;';
+      const bg = 'background:transparent;';
       const cell = (txt, extra='') =>
         `<td style="${CELL_PREFIX}${bg}color:#ffffff;${extra}">${txt}</td>`;
       return `<tr>
