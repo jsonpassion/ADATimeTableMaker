@@ -852,9 +852,9 @@ async function copyTable() {
 
     // Keynote scales pt-in-HTML by ~1.333×, so 24pt here renders as 32pt in Keynote.
     const FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif";
-    const BASE_CELL = `font-family:${FONT};font-size:24pt;font-weight:bold;` +
+    const BASE_CELL_NO_BG = `font-family:${FONT};font-size:24pt;font-weight:bold;` +
                       `padding:16px 24px;text-align:center;border:1px solid #1e1e1e;` +
-                      `background:transparent;color:#ffffff;`;
+                      `color:#ffffff;`;
 
     const rows = timed.map(p => {
       const twSingle = `${fmtTime(p.startMin)} - ${fmtTime(p.endMin)} (${p.duration}m)`;
@@ -864,8 +864,9 @@ async function copyTable() {
         const twPm = `${fmtTime(p.startMin + offset)} - ${fmtTime(p.endMin + offset)} (${p.duration}m)`;
         twHtml = esc(twSingle) + '<br>' + esc(twPm);
       }
+      const bg = isBreak(p) ? 'background:#8a8a8a;' : 'background:transparent;';
       const cell = (content, extra='') =>
-        `<td style="${BASE_CELL}${extra}">${content}</td>`;
+        `<td style="${BASE_CELL_NO_BG}${bg}${extra}">${content}</td>`;
       return `<tr>
         ${cell(twHtml, 'white-space:nowrap;')}
         ${cell(esc(p.title))}
