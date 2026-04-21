@@ -864,7 +864,7 @@ async function copyTable() {
         const twPm = `${fmtTime(p.startMin + offset)} - ${fmtTime(p.endMin + offset)} (${p.duration}m)`;
         twHtml = esc(twSingle) + '<br>' + esc(twPm);
       }
-      const bg = isBreak(p) ? 'background:#8a8a8a;' : 'background:transparent;';
+      const bg = isBreak(p) ? 'background-color:#8a8a8a;' : '';
       const cell = (content, extra='') =>
         `<td style="${BASE_CELL_NO_BG}${bg}${extra}">${content}</td>`;
       return `<tr>
@@ -881,7 +881,7 @@ async function copyTable() {
 
     const html = `
       <meta charset="utf-8">
-      <table style="border-collapse:collapse;width:1800pt;height:800pt;background:transparent;">
+      <table style="border-collapse:collapse;width:1800pt;height:800pt;">
         <thead><tr>${hdrCell('Time')}${hdrCell('Program')}${hdrCell('진행자')}${hdrCell('장소')}</tr></thead>
         <tbody>${rows}</tbody>
       </table>`;
