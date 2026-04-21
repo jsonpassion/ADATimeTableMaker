@@ -850,11 +850,18 @@ async function copyTable() {
     const timed  = timeSeries(progs, base);
     const hdrBg  = '#0090d4';
 
-    // Keynote scales pt-in-HTML by ~1.333×, so 24pt here renders as 32pt in Keynote.
+    // Keynote scales HTML pt by ~1.333×. Divide target by 1.333 to compensate.
+    // Target: 1800×800pt in Keynote → CSS: 1350×600pt
+    const KS = 1.333; // Keynote scale factor
+    const TW = Math.round(1800 / KS); // table width
+    const TH = Math.round(800 / KS);  // table height
+    const rowCount = timed.length + 1; // +1 for header
+    const rowH = Math.round(TH / rowCount);
+
     const FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif";
     const BASE_CELL_NO_BG = `font-family:${FONT};font-size:24pt;font-weight:bold;` +
-                      `padding:16px 24px;text-align:center;border:1px solid #1e1e1e;` +
-                      `color:#ffffff;`;
+                      `height:${rowH}pt;padding:16px 24px;text-align:center;` +
+                      `border:1px solid #1e1e1e;color:#ffffff;`;
 
     const rows = timed.map(p => {
       const twSingle = `${fmtTime(p.startMin)} - ${fmtTime(p.endMin)} (${p.duration}m)`;
@@ -877,11 +884,11 @@ async function copyTable() {
 
     const hdrCell = (txt) =>
       `<th style="background:${hdrBg};color:#ffffff;font-family:${FONT};font-size:24pt;` +
-      `font-weight:bold;padding:16px 24px;text-align:center;border:1px solid ${hdrBg};">${txt}</th>`;
+      `font-weight:bold;height:${rowH}pt;padding:16px 24px;text-align:center;border:1px solid ${hdrBg};">${txt}</th>`;
 
     const html = `
       <meta charset="utf-8">
-      <table style="border-collapse:collapse;width:1800pt;height:800pt;">
+      <table style="border-collapse:collapse;width:${TW}pt;height:${TH}pt;">
         <thead><tr>${hdrCell('Time')}${hdrCell('Program')}${hdrCell('진행자')}${hdrCell('장소')}</tr></thead>
         <tbody>${rows}</tbody>
       </table>`;
