@@ -851,46 +851,55 @@ async function copyTable() {
     const hdrBg  = '#0090d4';
 
     // Keynote scales HTML pt by ~1.333×. Divide target by 1.333 to compensate.
-    // Target: 1800×800pt in Keynote → CSS: 1350×600pt
-    const KS = 1.333; // Keynote scale factor
-    const TW = Math.round(1800 / KS); // table width
-    const TH = Math.round(800 / KS);  // table height
-    const rowCount = timed.length + 1; // +1 for header
+    // Target: 1800×800pt in Keynote → CSS: ~1350×~700pt
+    const KS = 1.333;
+    const TW = Math.round(1800 / KS);
+    const TH = Math.round(800 / KS) + 100; // extra padding for row distribution
+    const rowCount = timed.length + 1;
     const rowH = Math.round(TH / rowCount);
 
     const FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif";
-    const CELL_BASE = `font-family:${FONT};font-size:24pt;font-weight:bold;` +
-                      `height:${rowH}pt;padding:16px 24px;text-align:center;color:#ffffff;`;
-    // Break row: gray fill + border. Normal row: no fill, no border.
-    const CELL_NORMAL = CELL_BASE;
-    const CELL_BREAK  = CELL_BASE + `background-color:#8a8a8a;border:1px solid #8a8a8a;`;
+    const SPAN_STYLE = `font-family:${FONT};font-size:24pt;font-weight:bold;color:#ffffff;`;
 
     const rows = timed.map(p => {
       const twSingle = `${fmtTime(p.startMin)} - ${fmtTime(p.endMin)} (${p.duration}m)`;
-      let twHtml = esc(twSingle);
+      let twHtml = `<span style="${SPAN_STYLE}white-space:nowrap;">${esc(twSingle)}</span>`;
       if (state.mode === 'both') {
         const offset = pmBase - base;
         const twPm = `${fmtTime(p.startMin + offset)} - ${fmtTime(p.endMin + offset)} (${p.duration}m)`;
-        twHtml = esc(twSingle) + '<br>' + esc(twPm);
+        twHtml = `<span style="${SPAN_STYLE}white-space:nowrap;">${esc(twSingle)}<br>${esc(twPm)}</span>`;
       }
-      const style = isBreak(p) ? CELL_BREAK : CELL_NORMAL;
-      const cell = (content, extra='') =>
-        `<td style="${style}${extra}">${content}</td>`;
+      const spanWrap = (txt) => `<span style="${SPAN_STYLE}">${txt}</span>`;
+
+      if (isBreak(p)) {
+        // Break row: td gets gray fill only, text styled in span
+        const breakTd = (content) =>
+          `<td style="background-color:#8a8a8a;height:${rowH}pt;padding:16px 24px;text-align:center;">${content}</td>`;
+        return `<tr>
+          ${breakTd(twHtml)}
+          ${breakTd(spanWrap(esc(p.title)))}
+          ${breakTd(spanWrap(esc(p.facilitator)))}
+          ${breakTd(spanWrap(esc(p.location)))}
+        </tr>`;
+      }
+      // Normal row: td has NO style attribute at all → Keynote "No Fill"
+      const td = (content) =>
+        `<td height="${rowH}" align="center">${content}</td>`;
       return `<tr>
-        ${cell(twHtml, 'white-space:nowrap;')}
-        ${cell(esc(p.title))}
-        ${cell(esc(p.facilitator))}
-        ${cell(esc(p.location))}
+        ${td(twHtml)}
+        ${td(spanWrap(esc(p.title)))}
+        ${td(spanWrap(esc(p.facilitator)))}
+        ${td(spanWrap(esc(p.location)))}
       </tr>`;
     }).join('');
 
     const hdrCell = (txt) =>
       `<th style="background:${hdrBg};color:#ffffff;font-family:${FONT};font-size:24pt;` +
-      `font-weight:bold;height:${rowH}pt;padding:16px 24px;text-align:center;border:1px solid ${hdrBg};">${txt}</th>`;
+      `font-weight:bold;height:${rowH}pt;padding:16px 24px;text-align:center;">${txt}</th>`;
 
     const html = `
       <meta charset="utf-8">
-      <table style="border-collapse:collapse;border:none;width:${TW}pt;height:${TH}pt;">
+      <table width="${TW}" height="${TH}" cellpadding="16" cellspacing="0">
         <thead><tr>${hdrCell('Time')}${hdrCell('Program')}${hdrCell('진행자')}${hdrCell('장소')}</tr></thead>
         <tbody>${rows}</tbody>
       </table>`;
