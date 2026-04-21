@@ -856,7 +856,7 @@ async function copyTable() {
     const FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif";
     // 속성 순서: background: → color:#ffffff (검증된 순서, shorthand 통일)
     const CELL_PREFIX = `font-family:${FONT};font-size:24pt;font-weight:bold;` +
-                        `padding:48px 24px;text-align:center;border:1px solid #1e1e1e;`;
+                        `padding:8px 24px;text-align:center;border:1px solid #1e1e1e;`;
 
     const rows = timed.map(p => {
       const twSingle = `${fmtTime(p.startMin)} - ${fmtTime(p.endMin)}`;
@@ -879,7 +879,7 @@ async function copyTable() {
 
     const hdrCell = (txt) =>
       `<th style="background:${hdrBg};color:#ffffff;font-family:${FONT};font-size:24pt;` +
-      `font-weight:bold;padding:48px 24px;text-align:center;border:1px solid ${hdrBg};">${txt}</th>`;
+      `font-weight:bold;padding:8px 24px;text-align:center;border:1px solid ${hdrBg};">${txt}</th>`;
 
     const html = `
       <meta charset="utf-8">
