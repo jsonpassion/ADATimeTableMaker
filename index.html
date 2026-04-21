@@ -853,8 +853,8 @@ async function copyTable() {
     // 작동 검증된 패턴(4dfdce6) 복원: background: shorthand 통일, height 미사용
     const FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif";
     // 속성 순서: background: → color:#ffffff (검증된 순서, shorthand 통일)
-    const CELL_PREFIX = `font-family:${FONT};font-size:24pt;font-weight:bold;` +
-                        `padding:16px 24px;text-align:center;border:1px solid #1e1e1e;`;
+    const CELL_PREFIX = `font-family:${FONT};font-size:48pt;font-weight:bold;` +
+                        `padding:32px 48px;text-align:center;border:1px solid #1e1e1e;`;
 
     const rows = timed.map(p => {
       const twSingle = `${fmtTime(p.startMin)} - ${fmtTime(p.endMin)} (${p.duration}m)`;
@@ -876,12 +876,12 @@ async function copyTable() {
     }).join('');
 
     const hdrCell = (txt) =>
-      `<th style="background:${hdrBg};color:#ffffff;font-family:${FONT};font-size:24pt;` +
-      `font-weight:bold;padding:16px 24px;text-align:center;border:1px solid ${hdrBg};">${txt}</th>`;
+      `<th style="background:${hdrBg};color:#ffffff;font-family:${FONT};font-size:48pt;` +
+      `font-weight:bold;padding:32px 48px;text-align:center;border:1px solid ${hdrBg};">${txt}</th>`;
 
     const html = `
       <meta charset="utf-8">
-      <table style="border-collapse:collapse;width:100%;background:transparent;">
+      <table style="border-collapse:collapse;width:200%;background:transparent;">
         <thead><tr>${hdrCell('Time')}${hdrCell('Program')}${hdrCell('진행자')}${hdrCell('장소')}</tr></thead>
         <tbody>${rows}</tbody>
       </table>`;
