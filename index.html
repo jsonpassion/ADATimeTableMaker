@@ -850,21 +850,10 @@ async function copyTable() {
     const timed  = timeSeries(progs, base);
     const hdrBg  = '#0090d4';
 
-    // Keynote scales HTML pt by ~1.333×. Divide target by 1.333 to compensate.
-    // Target: 1800×800pt in Keynote → CSS: ~1350×~700pt
-    const KS = 1.333;
-    const TW = Math.round(1800 / KS);
-    const TH = Math.round(800 / KS) + 100; // extra padding for row distribution
-    const rowCount = timed.length + 1;
-    const rowH = Math.round(TH / rowCount);
-
-    // background:transparent; 를 명시해야 Keynote에서 No Fill로 인식 (d82d895에서 검증)
+    // 작동 검증된 패턴(4dfdce6) 복원: background: shorthand 통일, height 미사용
     const FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif";
-    const CELL_BASE = `font-family:${FONT};font-size:24pt;font-weight:bold;` +
-                      `height:${rowH}pt;padding:16px 24px;text-align:center;` +
-                      `border:1px solid #1e1e1e;color:#ffffff;`;
-    const CELL_NORMAL = CELL_BASE + `background:transparent;`;
-    const CELL_BREAK  = CELL_BASE + `background-color:#8a8a8a;`;
+    const CELL_COMMON = `font-family:${FONT};font-size:24pt;font-weight:bold;` +
+                        `padding:16px 24px;text-align:center;border:1px solid #1e1e1e;color:#ffffff;`;
 
     const rows = timed.map(p => {
       const twSingle = `${fmtTime(p.startMin)} - ${fmtTime(p.endMin)} (${p.duration}m)`;
@@ -874,9 +863,10 @@ async function copyTable() {
         const twPm = `${fmtTime(p.startMin + offset)} - ${fmtTime(p.endMin + offset)} (${p.duration}m)`;
         twHtml = esc(twSingle) + '<br>' + esc(twPm);
       }
-      const style = isBreak(p) ? CELL_BREAK : CELL_NORMAL;
+      // background: shorthand 통일 — transparent 또는 #8a8a8a
+      const bg = isBreak(p) ? 'background:#8a8a8a;' : 'background:transparent;';
       const cell = (content, extra='') =>
-        `<td style="${style}${extra}">${content}</td>`;
+        `<td style="${CELL_COMMON}${bg}${extra}">${content}</td>`;
       return `<tr>
         ${cell(twHtml, 'white-space:nowrap;')}
         ${cell(esc(p.title))}
@@ -887,11 +877,11 @@ async function copyTable() {
 
     const hdrCell = (txt) =>
       `<th style="background:${hdrBg};color:#ffffff;font-family:${FONT};font-size:24pt;` +
-      `font-weight:bold;height:${rowH}pt;padding:16px 24px;text-align:center;border:1px solid ${hdrBg};">${txt}</th>`;
+      `font-weight:bold;padding:16px 24px;text-align:center;border:1px solid ${hdrBg};">${txt}</th>`;
 
     const html = `
       <meta charset="utf-8">
-      <table style="border-collapse:collapse;width:${TW}pt;height:${TH}pt;background:transparent;">
+      <table style="border-collapse:collapse;width:100%;background:transparent;">
         <thead><tr>${hdrCell('Time')}${hdrCell('Program')}${hdrCell('진행자')}${hdrCell('장소')}</tr></thead>
         <tbody>${rows}</tbody>
       </table>`;
