@@ -864,10 +864,11 @@ async function copyTable() {
         const twPm = `${fmtTime(p.startMin + offset)} - ${fmtTime(p.endMin + offset)} (${p.duration}m)`;
         twContent = esc(twSingle) + '<br>' + esc(twPm);
       }
-      const bg = 'background:transparent;';
       const cell = (txt, extra='') =>
-        `<td style="${CELL_PREFIX}${bg}color:#ffffff;${extra}">${txt}</td>`;
-      return `<tr>
+        `<td style="${CELL_PREFIX}background:transparent;color:#ffffff;${extra}">${txt}</td>`;
+      // break 행은 <tr>에 배경 지정 (td가 아닌 tr 레벨 → Keynote가 별도 처리)
+      const trStyle = isBreak(p) ? ' style="background:#c0c0c0;"' : '';
+      return `<tr${trStyle}>
         ${cell(twContent, 'white-space:nowrap;')}
         ${cell(esc(p.title))}
         ${cell(esc(p.facilitator))}
