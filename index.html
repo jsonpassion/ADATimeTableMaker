@@ -858,48 +858,40 @@ async function copyTable() {
     const rowCount = timed.length + 1;
     const rowH = Math.round(TH / rowCount);
 
+    // background:transparent; 를 명시해야 Keynote에서 No Fill로 인식 (d82d895에서 검증)
     const FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif";
-    const SPAN_STYLE = `font-family:${FONT};font-size:24pt;font-weight:bold;color:#ffffff;`;
+    const CELL_BASE = `font-family:${FONT};font-size:24pt;font-weight:bold;` +
+                      `height:${rowH}pt;padding:16px 24px;text-align:center;` +
+                      `border:1px solid #1e1e1e;color:#ffffff;`;
+    const CELL_NORMAL = CELL_BASE + `background:transparent;`;
+    const CELL_BREAK  = CELL_BASE + `background-color:#8a8a8a;`;
 
     const rows = timed.map(p => {
       const twSingle = `${fmtTime(p.startMin)} - ${fmtTime(p.endMin)} (${p.duration}m)`;
-      let twHtml = `<span style="${SPAN_STYLE}white-space:nowrap;">${esc(twSingle)}</span>`;
+      let twHtml = esc(twSingle);
       if (state.mode === 'both') {
         const offset = pmBase - base;
         const twPm = `${fmtTime(p.startMin + offset)} - ${fmtTime(p.endMin + offset)} (${p.duration}m)`;
-        twHtml = `<span style="${SPAN_STYLE}white-space:nowrap;">${esc(twSingle)}<br>${esc(twPm)}</span>`;
+        twHtml = esc(twSingle) + '<br>' + esc(twPm);
       }
-      const spanWrap = (txt) => `<span style="${SPAN_STYLE}">${txt}</span>`;
-
-      if (isBreak(p)) {
-        // Break row: td gets gray fill only, text styled in span
-        const breakTd = (content) =>
-          `<td style="background-color:#8a8a8a;height:${rowH}pt;padding:16px 24px;text-align:center;">${content}</td>`;
-        return `<tr>
-          ${breakTd(twHtml)}
-          ${breakTd(spanWrap(esc(p.title)))}
-          ${breakTd(spanWrap(esc(p.facilitator)))}
-          ${breakTd(spanWrap(esc(p.location)))}
-        </tr>`;
-      }
-      // Normal row: td has NO style attribute at all → Keynote "No Fill"
-      const td = (content) =>
-        `<td height="${rowH}" align="center">${content}</td>`;
+      const style = isBreak(p) ? CELL_BREAK : CELL_NORMAL;
+      const cell = (content, extra='') =>
+        `<td style="${style}${extra}">${content}</td>`;
       return `<tr>
-        ${td(twHtml)}
-        ${td(spanWrap(esc(p.title)))}
-        ${td(spanWrap(esc(p.facilitator)))}
-        ${td(spanWrap(esc(p.location)))}
+        ${cell(twHtml, 'white-space:nowrap;')}
+        ${cell(esc(p.title))}
+        ${cell(esc(p.facilitator))}
+        ${cell(esc(p.location))}
       </tr>`;
     }).join('');
 
     const hdrCell = (txt) =>
       `<th style="background:${hdrBg};color:#ffffff;font-family:${FONT};font-size:24pt;` +
-      `font-weight:bold;height:${rowH}pt;padding:16px 24px;text-align:center;">${txt}</th>`;
+      `font-weight:bold;height:${rowH}pt;padding:16px 24px;text-align:center;border:1px solid ${hdrBg};">${txt}</th>`;
 
     const html = `
       <meta charset="utf-8">
-      <table width="${TW}" height="${TH}" cellpadding="16" cellspacing="0">
+      <table style="border-collapse:collapse;width:${TW}pt;height:${TH}pt;background:transparent;">
         <thead><tr>${hdrCell('Time')}${hdrCell('Program')}${hdrCell('진행자')}${hdrCell('장소')}</tr></thead>
         <tbody>${rows}</tbody>
       </table>`;
