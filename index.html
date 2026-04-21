@@ -44,6 +44,7 @@
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
+    flex-wrap: wrap;
   }
 
   .header h1 {
@@ -56,56 +57,37 @@
 
   .divider { width: 1px; height: 24px; background: var(--border); }
 
-  /* AM/PM Toggle */
-  .pm-toggle-wrap {
+  /* Radio group */
+  .mode-group {
     display: flex;
-    align-items: center;
-    gap: 10px;
-    cursor: pointer;
-    user-select: none;
-  }
-
-  .pm-toggle-wrap input[type=checkbox] { display: none; }
-
-  .toggle-track {
-    width: 52px; height: 26px;
-    background: var(--surface2);
+    gap: 0;
     border: 1px solid var(--border);
-    border-radius: 13px;
-    position: relative;
-    transition: background 0.2s, border-color 0.2s;
+    border-radius: var(--radius);
+    overflow: hidden;
   }
-
-  .toggle-track::after {
-    content: '';
-    position: absolute;
-    top: 3px; left: 3px;
-    width: 18px; height: 18px;
-    background: var(--am);
-    border-radius: 50%;
-    transition: transform 0.2s, background 0.2s;
-  }
-
-  .pm-toggle-wrap input:checked + .toggle-track { background: #2a1800; border-color: var(--pm); }
-  .pm-toggle-wrap input:checked + .toggle-track::after {
-    transform: translateX(26px);
-    background: var(--pm);
-  }
-
-  .session-badge {
-    padding: 3px 10px;
-    border-radius: 4px;
+  .mode-group label {
+    padding: 6px 14px;
     font-size: 12px;
     font-weight: 700;
     font-family: 'IBM Plex Mono', monospace;
-    letter-spacing: 0.06em;
+    cursor: pointer;
+    background: var(--surface2);
+    color: var(--muted);
+    transition: background 0.15s, color 0.15s;
+    border-right: 1px solid var(--border);
+    user-select: none;
+  }
+  .mode-group label:last-child { border-right: none; }
+  .mode-group label:hover { color: var(--text); }
+  .mode-group input[type=radio] { display: none; }
+  .mode-group input:checked + span {
     background: var(--am);
     color: #fff;
-    transition: background 0.2s;
-    min-width: 36px;
-    text-align: center;
   }
-  .session-badge.pm { background: var(--pm); }
+  .mode-group label.active {
+    background: var(--am);
+    color: #fff;
+  }
 
   /* Start time */
   .field-label {
@@ -127,7 +109,6 @@
     transition: border-color 0.15s;
   }
   input:focus { border-color: var(--accent); }
-  input[type=time] { width: 140px; padding: 5px 12px; font-size: 14px; }
   input.start-time {
     width: 72px;
     text-align: center;
@@ -135,6 +116,9 @@
     font-size: 14px;
     padding: 5px 10px;
   }
+
+  .start-wrap { display: flex; align-items: center; gap: 8px; }
+  .start-wrap.hidden { display: none; }
 
   /* Action button group */
   .btn-group {
@@ -169,7 +153,6 @@
     border-color: transparent;
   }
   .btn-action.primary:hover { opacity: 0.88; }
-  .btn-action.primary.pm { background: var(--pm); }
 
   .btn-action.success {
     border-color: #22c55e !important;
@@ -285,11 +268,12 @@
     font-family: 'IBM Plex Mono', monospace;
     font-size: 11px;
     color: var(--accent);
-    white-space: nowrap;
+    white-space: pre-line;
     padding: 4px 8px;
     background: rgba(0,144,212,0.08);
     border-radius: 4px;
     display: inline-block;
+    line-height: 1.5;
   }
   .time-badge.pm { color: var(--pm); background: rgba(224,123,0,0.1); }
   .time-badge.over {
@@ -347,8 +331,8 @@
     table-layout: fixed;
   }
 
-  #scheduleTable colgroup col:nth-child(1) { width: 18%; }
-  #scheduleTable colgroup col:nth-child(2) { width: 42%; }
+  #scheduleTable colgroup col:nth-child(1) { width: 22%; }
+  #scheduleTable colgroup col:nth-child(2) { width: 38%; }
   #scheduleTable colgroup col:nth-child(3) { width: 20%; }
   #scheduleTable colgroup col:nth-child(4) { width: 20%; }
 
@@ -362,8 +346,6 @@
     border: 1px solid #0090d4;
     letter-spacing: 0.02em;
   }
-
-  /* Preview header stays blue regardless of AM/PM */
 
   #scheduleTable tbody td {
     background: #000;
@@ -391,7 +373,8 @@
     font-family: 'IBM Plex Mono', monospace;
     font-weight: 600;
     font-size: 14px;
-    white-space: nowrap;
+    white-space: pre-line;
+    line-height: 1.6;
   }
 
   /* Preview row that exceeds session limit */
@@ -452,19 +435,28 @@
   <h1>📋 ADA TimeTable Maker</h1>
   <div class="divider"></div>
 
-  <label class="pm-toggle-wrap" title="AM/PM 세션 전환 — 프로그램은 공유됩니다">
-    <input type="checkbox" id="pmToggle" onchange="onToggleSession()">
-    <div class="toggle-track"></div>
-  </label>
-  <span class="session-badge" id="sessionBadge">AM</span>
-  <span style="font-size:12px; color:var(--muted)">세션 전환 (프로그램 공유)</span>
+  <div class="mode-group" id="modeGroup">
+    <label id="lbl-both" class="active" onclick="onModeChange('both')">
+      <input type="radio" name="mode" value="both" checked>
+      <span>AM+PM</span>
+    </label>
+    <label id="lbl-am" onclick="onModeChange('am')">
+      <input type="radio" name="mode" value="am">
+      <span>AM</span>
+    </label>
+    <label id="lbl-pm" onclick="onModeChange('pm')">
+      <input type="radio" name="mode" value="pm">
+      <span>PM</span>
+    </label>
+  </div>
 
-  <div class="divider"></div>
-
-  <span class="field-label">시작 시간</span>
-  <input type="text" id="startTimeInput" class="start-time" value="09:10"
-         inputmode="numeric" maxlength="5" pattern="[0-9]{1,2}:[0-9]{2}"
-         oninput="renderAll()" placeholder="HH:MM">
+  <div class="start-wrap hidden" id="startWrap">
+    <div class="divider"></div>
+    <span class="field-label">시작 시간</span>
+    <input type="text" id="startTimeInput" class="start-time" value="09:10"
+           inputmode="numeric" maxlength="5" pattern="[0-9]{1,2}:[0-9]{2}"
+           oninput="renderAll()" placeholder="HH:MM">
+  </div>
 
   <div class="btn-group">
     <button class="btn-action" id="copyImgBtn" onclick="copyImage()" title="PNG를 클립보드에 복사 → 키노트에 붙여넣기">
@@ -494,7 +486,7 @@
           <th style="width:140px">진행자</th>
           <th style="width:150px">장소</th>
           <th style="width:80px; text-align:center">시간(분)</th>
-          <th style="width:130px">타임 윈도우</th>
+          <th style="width:180px">타임 윈도우</th>
           <th style="width:44px"></th>
         </tr>
       </thead>
@@ -540,14 +532,19 @@ const DEFAULT = [
   { title: 'Wrap-up',  facilitator: '', location: '', duration: 10 },
 ];
 
-// AM/PM 세션은 같은 4시간 윈도우에 같은 프로그램 패턴을 사용하므로
-// 단일 배열을 공유한다. 토글은 시간대(시작 시각/색상/세션 종료)만 전환한다.
+// 단일 프로그램 배열을 AM/PM 공유. mode가 시간대만 결정한다.
 let state = {
   programs: JSON.parse(JSON.stringify(DEFAULT)),
-  isPM: false,
+  mode: 'both', // 'both' | 'am' | 'pm'
 };
 
 let dragSrcIdx = null;
+
+// ─── CONSTANTS ─────────────────────────────────────────────────
+const AM_START = '09:10';
+const PM_START = '14:10';
+const AM_END   = 12*60 + 50; // 12:50
+const PM_END   = 17*60 + 50; // 17:50
 
 // ─── HELPERS ────────────────────────────────────────────────────
 function cur()    { return state.programs; }
@@ -573,32 +570,51 @@ function isBreak(p) { return p.title.trim().toLowerCase() === 'break' || (!p.fac
 function esc(s) {
   return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-// Session windows: AM 09:10–12:50, PM 14:10–17:50 (start editable)
-function defaultStart() { return state.isPM ? '14:10' : '09:10'; }
-function sessionEnd()   { return state.isPM ? 17*60+50 : 12*60+50; }
+
 function getStart() {
+  if (state.mode === 'both') return AM_START;
+  if (state.mode === 'pm')   return PM_START;
   const v = (document.getElementById('startTimeInput').value || '').trim();
-  return /^\d{1,2}:\d{2}$/.test(v) ? v : defaultStart();
+  return /^\d{1,2}:\d{2}$/.test(v) ? v : AM_START;
 }
 
-// ─── TOGGLE ─────────────────────────────────────────────────────
-function onToggleSession() {
-  state.isPM = document.getElementById('pmToggle').checked;
-  const badge = document.getElementById('sessionBadge');
-  const table = document.getElementById('scheduleTable');
-  document.getElementById('startTimeInput').value = defaultStart();
+function sessionEndFor(mode) {
+  return mode === 'pm' ? PM_END : AM_END;
+}
+function sessionEnd() {
+  return sessionEndFor(state.mode === 'both' ? 'am' : state.mode);
+}
 
-  if (state.isPM) {
-    badge.textContent = 'PM'; badge.className = 'session-badge pm';
-    document.getElementById('exportBtn').classList.add('pm');
-    table.className = 'pm';
-    document.documentElement.style.setProperty('--accent', 'var(--pm)');
-  } else {
-    badge.textContent = 'AM'; badge.className = 'session-badge';
-    document.getElementById('exportBtn').classList.remove('pm');
-    table.className = '';
-    document.documentElement.style.setProperty('--accent', 'var(--am)');
+// Build time-window text for a given timed entry
+function twText(p, base, pmBase) {
+  const dur = p.duration + 'm';
+  const amLine = `${fmtTime(p.startMin)} - ${fmtTime(p.endMin)} (${dur})`;
+  if (state.mode === 'both' && pmBase != null) {
+    const offset = pmBase - base;
+    const pmLine = `${fmtTime(p.startMin + offset)} - ${fmtTime(p.endMin + offset)} (${dur})`;
+    return amLine + '\n' + pmLine;
   }
+  return amLine;
+}
+
+// ─── MODE CHANGE ────────────────────────────────────────────────
+function onModeChange(mode) {
+  state.mode = mode;
+  // Update radio highlight
+  document.querySelectorAll('#modeGroup label').forEach(l => l.classList.remove('active'));
+  document.getElementById('lbl-' + mode).classList.add('active');
+  document.querySelector(`#modeGroup input[value="${mode}"]`).checked = true;
+
+  // Show/hide start time input (hidden in 'both' mode)
+  const wrap = document.getElementById('startWrap');
+  if (mode === 'both') {
+    wrap.classList.add('hidden');
+  } else {
+    wrap.classList.remove('hidden');
+    document.getElementById('startTimeInput').value = mode === 'pm' ? PM_START : AM_START;
+  }
+
+  document.documentElement.style.setProperty('--accent', 'var(--am)');
   renderAll();
 }
 
@@ -606,8 +622,9 @@ function onToggleSession() {
 function renderEditor() {
   const progs = cur();
   const base  = parseTime(getStart());
+  const pmBase = parseTime(PM_START);
   const timed = timeSeries(progs, base);
-  const isPM  = state.isPM;
+  const limit = sessionEnd();
   const tbody = document.getElementById('editorBody');
   tbody.innerHTML = '';
 
@@ -645,10 +662,9 @@ function renderEditor() {
       }
     });
 
-    const tw    = `${fmtTime(p.startMin)} – ${fmtTime(p.endMin)} (${p.duration}m)`;
-    const limit = sessionEnd();
+    const tw    = twText(p, base, parseTime(PM_START));
     const over  = p.endMin > limit;
-    const badgeCls = over ? 'time-badge over' : `time-badge${isPM?' pm':''}`;
+    const badgeCls = over ? 'time-badge over' : 'time-badge';
     tr.innerHTML = `
       <td><span class="drag-handle" title="드래그로 이동">⠿</span></td>
       <td><span class="row-num">${i+1}</span></td>
@@ -660,7 +676,7 @@ function renderEditor() {
            oninput="updateProg(${i},'location',this.value)" placeholder="—"></td>
       <td><input class="e-input dur" type="number" min="1" value="${p.duration}"
            oninput="updateProg(${i},'duration',this.value)"></td>
-      <td><span class="${badgeCls}">${tw}${over?' ⚠️':''}</span></td>
+      <td><span class="${badgeCls}">${esc(tw)}${over?' ⚠️':''}</span></td>
       <td><button class="btn-delete" onclick="deleteRow(${i})" title="삭제">✕</button></td>
     `;
     tbody.appendChild(tr);
@@ -671,6 +687,7 @@ function renderEditor() {
 function renderPreview() {
   const progs  = cur();
   const base   = parseTime(getStart());
+  const pmBase = parseTime(PM_START);
   const timed  = timeSeries(progs, base);
   const limit  = sessionEnd();
   const tbody  = document.getElementById('scheduleBody');
@@ -681,8 +698,10 @@ function renderPreview() {
     const over = p.endMin > limit;
     const classes = [isBreak(p) ? 'break-row' : '', over ? 'over-row' : ''].filter(Boolean).join(' ');
     if (classes) tr.className = classes;
+
+    const timeStr = twText(p, base, pmBase);
     tr.innerHTML = `
-      <td class="time-col">${fmtTime(p.startMin)} - ${fmtTime(p.endMin)} (${p.duration}m)</td>
+      <td class="time-col">${esc(timeStr)}</td>
       <td>${esc(p.title)}</td>
       <td>${esc(p.facilitator)}</td>
       <td>${esc(p.location)}</td>
@@ -740,15 +759,15 @@ function updateProg(i, field, val) {
 function refreshTimeBadges() {
   const progs = cur();
   const base  = parseTime(getStart());
+  const pmBase = parseTime(PM_START);
   const timed = timeSeries(progs, base);
-  const isPM  = state.isPM;
   const limit = sessionEnd();
   document.querySelectorAll('#editorBody tr').forEach((tr, i) => {
     const span = tr.querySelector('.time-badge');
     if (span && timed[i]) {
       const over = timed[i].endMin > limit;
-      span.textContent = `${fmtTime(timed[i].startMin)} – ${fmtTime(timed[i].endMin)} (${progs[i].duration}m)${over?' ⚠️':''}`;
-      span.className = over ? 'time-badge over' : ('time-badge' + (isPM ? ' pm' : ''));
+      span.textContent = twText(timed[i], base, pmBase) + (over ? ' ⚠️' : '');
+      span.className = over ? 'time-badge over' : 'time-badge';
     }
     if (progs[i]) tr.classList.toggle('break-row', isBreak(progs[i]));
   });
@@ -788,9 +807,9 @@ async function exportImage() {
   try {
     const canvas = await renderCanvas();
     const link = document.createElement('a');
-    const tag = state.isPM ? 'PM' : 'AM';
-    const st  = getStart().replace(':','');
-    link.download = `schedule_${tag}_${st}.png`;
+    const tags = { both: 'AMPM', am: 'AM', pm: 'PM' };
+    const st   = getStart().replace(':','');
+    link.download = `schedule_${tags[state.mode]}_${st}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
     showToast('📷 이미지가 저장되었습니다');
@@ -824,25 +843,31 @@ async function copyTable() {
   try {
     const progs  = cur();
     const base   = parseTime(getStart());
+    const pmBase = parseTime(PM_START);
     const timed  = timeSeries(progs, base);
-    const isPM   = state.isPM;
     const hdrBg  = '#0090d4';
 
     // Keynote scales pt-in-HTML by ~1.333×, so 24pt here renders as 32pt in Keynote.
     const FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif";
     const BASE_CELL = `font-family:${FONT};font-size:24pt;font-weight:bold;` +
                       `padding:16px 24px;text-align:center;border:1px solid #1e1e1e;` +
-                      `background:transparent;`;
+                      `background:transparent;color:#ffffff;`;
 
     const rows = timed.map(p => {
-      const tw  = `${fmtTime(p.startMin)} - ${fmtTime(p.endMin)} (${p.duration}m)`;
-      const cell = (txt, extra='') =>
-        `<td style="${BASE_CELL}color:#ffffff;${extra}">${esc(txt)}</td>`;
+      const twSingle = `${fmtTime(p.startMin)} - ${fmtTime(p.endMin)} (${p.duration}m)`;
+      let twHtml = esc(twSingle);
+      if (state.mode === 'both') {
+        const offset = pmBase - base;
+        const twPm = `${fmtTime(p.startMin + offset)} - ${fmtTime(p.endMin + offset)} (${p.duration}m)`;
+        twHtml = esc(twSingle) + '<br>' + esc(twPm);
+      }
+      const cell = (content, extra='') =>
+        `<td style="${BASE_CELL}${extra}">${content}</td>`;
       return `<tr>
-        ${cell(tw, 'white-space:nowrap;')}
-        ${cell(p.title)}
-        ${cell(p.facilitator)}
-        ${cell(p.location)}
+        ${cell(twHtml, 'white-space:nowrap;')}
+        ${cell(esc(p.title))}
+        ${cell(esc(p.facilitator))}
+        ${cell(esc(p.location))}
       </tr>`;
     }).join('');
 
