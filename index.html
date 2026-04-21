@@ -859,9 +859,11 @@ async function copyTable() {
     const rowH = Math.round(TH / rowCount);
 
     const FONT = "'Helvetica Neue', Helvetica, Arial, sans-serif";
-    const BASE_CELL_NO_BG = `font-family:${FONT};font-size:24pt;font-weight:bold;` +
-                      `height:${rowH}pt;padding:16px 24px;text-align:center;` +
-                      `border:1px solid #1e1e1e;color:#ffffff;`;
+    const CELL_BASE = `font-family:${FONT};font-size:24pt;font-weight:bold;` +
+                      `height:${rowH}pt;padding:16px 24px;text-align:center;color:#ffffff;`;
+    // Break row: gray fill + border. Normal row: no fill, no border.
+    const CELL_NORMAL = CELL_BASE;
+    const CELL_BREAK  = CELL_BASE + `background-color:#8a8a8a;border:1px solid #8a8a8a;`;
 
     const rows = timed.map(p => {
       const twSingle = `${fmtTime(p.startMin)} - ${fmtTime(p.endMin)} (${p.duration}m)`;
@@ -871,9 +873,9 @@ async function copyTable() {
         const twPm = `${fmtTime(p.startMin + offset)} - ${fmtTime(p.endMin + offset)} (${p.duration}m)`;
         twHtml = esc(twSingle) + '<br>' + esc(twPm);
       }
-      const bg = isBreak(p) ? 'background-color:#8a8a8a;' : '';
+      const style = isBreak(p) ? CELL_BREAK : CELL_NORMAL;
       const cell = (content, extra='') =>
-        `<td style="${BASE_CELL_NO_BG}${bg}${extra}">${content}</td>`;
+        `<td style="${style}${extra}">${content}</td>`;
       return `<tr>
         ${cell(twHtml, 'white-space:nowrap;')}
         ${cell(esc(p.title))}
@@ -888,7 +890,7 @@ async function copyTable() {
 
     const html = `
       <meta charset="utf-8">
-      <table style="border-collapse:collapse;width:${TW}pt;height:${TH}pt;">
+      <table style="border-collapse:collapse;border:none;width:${TW}pt;height:${TH}pt;">
         <thead><tr>${hdrCell('Time')}${hdrCell('Program')}${hdrCell('진행자')}${hdrCell('장소')}</tr></thead>
         <tbody>${rows}</tbody>
       </table>`;
