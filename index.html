@@ -566,7 +566,10 @@ function timeSeries(progs, base) {
     return { ...p, startMin: s, endMin: t };
   });
 }
-function isBreak(p) { return p.title.trim().toLowerCase() === 'break' || (!p.facilitator && !p.location); }
+function isBreak(p) {
+  const t = p.title.trim().toLowerCase().replace(/\s+/g, '');
+  return t === 'break' || t === '쉬는시간' || (!p.facilitator && !p.location);
+}
 function esc(s) {
   return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
