@@ -331,11 +331,11 @@
     table-layout: fixed;
   }
 
-  #scheduleTable colgroup col:nth-child(1) { width: 22%; }
-  #scheduleTable colgroup col:nth-child(2) { width: 8%; }
-  #scheduleTable colgroup col:nth-child(3) { width: 34%; }
-  #scheduleTable colgroup col:nth-child(4) { width: 18%; }
-  #scheduleTable colgroup col:nth-child(5) { width: 18%; }
+  #scheduleTable colgroup col:nth-child(1) { width: 20%; }
+  #scheduleTable colgroup col:nth-child(2) { width: 10%; }
+  #scheduleTable colgroup col:nth-child(3) { width: 50%; }
+  #scheduleTable colgroup col:nth-child(4) { width: 10%; }
+  #scheduleTable colgroup col:nth-child(5) { width: 10%; }
 
   #scheduleTable thead th {
     background: #0090d4;
@@ -884,6 +884,7 @@ async function copyTable() {
     const html = `
       <meta charset="utf-8">
       <table style="border-collapse:collapse;width:200%;background:transparent;">
+        <colgroup><col style="width:20%"><col style="width:10%"><col style="width:50%"><col style="width:10%"><col style="width:10%"></colgroup>
         <thead><tr>${hdrCell('Time')}${hdrCell('Duration')}${hdrCell('Program')}${hdrCell('진행자')}${hdrCell('장소')}</tr></thead>
         <tbody>${rows}</tbody>
       </table>`;
